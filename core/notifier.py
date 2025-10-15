@@ -1,4 +1,5 @@
 import os
+import asyncio
 import telegram
 import logging
 from datetime import datetime
@@ -34,35 +35,71 @@ class TelegramNotifier:
             text = text.replace(char, f"\\{char}")
         return text
 
-    async def _send_message(self, chat_id: str, message: str, parse_mode="MarkdownV2"):
-        """A resilient method to send a message, with a fallback to plain text."""
+    async def _send_message(
+        self, chat_id: str, message: str, parse_mode="MarkdownV2"
+    ) -> bool:
+        """
+        Sends a single message with **per-chat timeout, retry and back-off**.
+        Returns True if the message was accepted by Telegram, False otherwise.
+        A False return is *not* fatal – the caller simply continues.
+        """
         if not self.is_enabled:
-            return
-        try:
-            # Create a new Bot instance for each message.
-            bot = telegram.Bot(token=self.bot_token)
-            logger.info("📤 Sending notification to chat ID %s.", chat_id)
-            await bot.send_message(
-                chat_id=chat_id,
-                text=message,
-                parse_mode=parse_mode,
-                disable_web_page_preview=True,
-            )
-            logger.info("✅ Successfully sent notification to chat ID %s.", chat_id)
-        except telegram.error.BadRequest as e:
-            logger.error(
-                "❌ Telegram BadRequest for chat %s (likely a Markdown error): %s",
-                chat_id,
-                e,
-            )
-            logger.error("📄 Message causing error:\n%s", message)
-            if parse_mode == "MarkdownV2":
-                logger.info("🔄 Retrying with plain text fallback...")
-                await self._send_message(chat_id, message, parse_mode=None)
-        except Exception as e:
-            logger.exception(
-                "❌ Failed to send Telegram notification to %s: %s", chat_id, e
-            )
+            return True  # treat disabled as success so caller keeps going
+
+        bot = telegram.Bot(token=self.bot_token)
+
+        for attempt in range(1, 4):  # 3 attempts max
+            try:
+                logger.info(
+                    "📤 [%s] attempt %s – sending to %s", attempt, attempt, chat_id
+                )
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text=message,
+                    parse_mode=parse_mode,
+                    disable_web_page_preview=True,
+                    read_timeout=15,  # <-- 15 s is plenty for a single text message
+                    write_timeout=15,
+                    connect_timeout=15,
+                )
+                logger.info("✅ [%s] delivered to %s", attempt, chat_id)
+                return True
+
+            except telegram.error.TimedOut as exc:
+                wait = 2**attempt  # 2 s, 4 s, 8 s
+                logger.warning(
+                    "⏱️  [%s] timeout for %s – retrying in %s s (%s)",
+                    attempt,
+                    chat_id,
+                    wait,
+                    exc,
+                )
+                await asyncio.sleep(wait)
+                continue
+
+            except telegram.error.BadRequest as exc:
+                # MarkdownV2 syntax error – fallback to plain text once
+                if parse_mode == "MarkdownV2":
+                    logger.warning(
+                        "🔄 [%s] BadRequest – falling back to plain text for %s",
+                        attempt,
+                        chat_id,
+                    )
+                    return await self._send_message(chat_id, message, parse_mode=None)
+                # already plain text – unrecoverable
+                logger.error(
+                    "❌ [%s] unrecoverable BadRequest for %s: %s", attempt, chat_id, exc
+                )
+                return False
+
+            except Exception as exc:
+                logger.exception(
+                    "❌ [%s] fatal error for %s: %s", attempt, chat_id, exc
+                )
+                return False
+
+        logger.error("❌ exhausted retries for %s – skipping this message", chat_id)
+        return False
 
     async def notify_summary(self, summary_data: dict) -> None:
         """Sends summary to boss with the correct link."""
