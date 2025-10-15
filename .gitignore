@@ -10,6 +10,7 @@ full.log
 
 # Ignore media cache
 media_cache/
+downloads/
 
 # Ignore local SQLite database
 database.db

@@ -102,7 +102,7 @@ async def main():
         logging.info(f"  -> Cleared database for {announcement['NEWSID']}.")
 
         # Run scraper and collect the notification tasks it produces
-        tasks_from_run = scraper.run(announcements_override=[announcement])
+        tasks_from_run = await scraper.run(announcements_override=[announcement])
         all_notification_tasks.extend(tasks_from_run)
 
     # Now, run all collected notification tasks sequentially at the end.

@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo  # Modern import for timezones
 
 logger = logging.getLogger()
 
-# Define the timezone 
+# Define the timezone
 IST = ZoneInfo("Asia/Kolkata")
 
 
@@ -76,7 +76,6 @@ class TelegramNotifier:
         timestamp = self._escape_markdown(timestamp_str)
         separator = self._escape_markdown("=" * 20)
 
-        
         original_pdf_url = summary_data.get("original_pdf_url", "")
         inner_links = summary_data.get("links", [])
 
@@ -90,7 +89,6 @@ class TelegramNotifier:
         if inner_links:
             inner_url = inner_links[0]["url"].replace("(", "%28").replace(")", "%29")
             link_section += f"\n*Inner Link:* [Link]({inner_url})"
-        
 
         message = (
             f"📊 *New AI Summary: {escaped_company}*\n"
@@ -105,10 +103,10 @@ class TelegramNotifier:
         await self._send_message(self.chat_id_summaries, message)
 
     async def notify_error(self, error_data: dict) -> None:
-        """Sends error notification to developer."""
         company = error_data.get("company_name", "Unknown")
         error_msg = error_data.get("message", "Unknown error")
-        pdf_url = error_data.get("pdf_url", "")
+        pdf_url = error_data.get("original_pdf_url", "")
+        inner_links = error_data.get("links", [])
 
         timestamp = self._escape_markdown(
             datetime.now(IST).strftime("%Y-%m-%d %H:%M %Z")
@@ -117,7 +115,11 @@ class TelegramNotifier:
         url_section = ""
         if pdf_url:
             safe_url = pdf_url.replace("(", "%28").replace(")", "%29")
-            url_section = f"\n*PDF URL:* [Link]({safe_url})"
+            url_section = f"\n*Original PDF:* [Link]({safe_url})"
+
+        if inner_links:
+            inner_url = inner_links[0]["url"].replace("(", "%28").replace(")", "%29")
+            url_section += f"\n*Inner Link:* [Link]({inner_url})"
 
         message = (
             f"❌ *Error Processing PDF*\n"

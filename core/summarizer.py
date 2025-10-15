@@ -247,9 +247,16 @@ class GeminiSummarizer:
                 f"❌ Media summarization failed for '{company_name}' (URL: {media_url}): {e}",
                 exc_info=True,
             )
-            return self._create_error_json(
-                "media_summarization_error", str(e), company_name, original_pdf_url
+            # --- START IMPLEMENTED CHANGE ---
+            error_json = self._create_error_json(
+                "media_summarization_error",
+                str(e),
+                company_name,
+                original_pdf_url,
             )
+            error_json["links"] = [{"url": media_url, "link_type": "media"}]
+            return error_json
+            # --- END IMPLEMENTED CHANGE ---
         finally:
             # Clean up the local downloaded file
             if filepath and filepath.exists() and not media_url.startswith("file://"):
