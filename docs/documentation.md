@@ -92,7 +92,7 @@ The application follows a clear, sequential data processing pipeline:
 ## 5. Setup and Installation
 
 ### 5.1. Prerequisites
-
+-   sudo apt update && sudo apt upgrade -y
 -   Python 3.8+
 -   `pip` package installer
 
