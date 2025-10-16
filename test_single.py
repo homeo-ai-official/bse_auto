@@ -1,4 +1,4 @@
-# /home/pravin/Development/bse_scraper/test_single.py - REVISED
+# /home/pravin/Development/bse_scraper/test_single.py
 
 from core.scraper import BSEScraper
 import asyncio
@@ -19,7 +19,6 @@ def setup_logging():
     logger.setLevel(logging.INFO)
 
     # --- IMPORTANT: Clear any existing handlers ---
-    # This prevents duplicate logs if the script is run in a weird way
     if logger.hasHandlers():
         logger.handlers.clear()
 
@@ -38,7 +37,7 @@ def setup_logging():
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    # --- PROFESSIONAL TOUCH: Control third-party library verbosity ---
+    # --- Control third-party library verbosity ---
     # Quieten down the noisy google libraries
     logging.getLogger("google.api_core").setLevel(logging.WARNING)
     logging.getLogger("google.auth.transport.requests").setLevel(logging.WARNING)
@@ -49,7 +48,7 @@ def setup_logging():
 
 async def main():
     log_path = setup_logging()
-    # Now we use the root logger, which we just configured.
+    # use the root logger
     logger = logging.getLogger(__name__)
 
     logger.info("🧪 --- SINGLE PDF TEST ---")
@@ -73,7 +72,6 @@ async def main():
     ]
 
     scraper = BSEScraper(test_mode=False)
-    # The scraper will now automatically use the logger we just set up.
 
     tasks = await scraper.run(announcements_override=mock)
     if tasks:

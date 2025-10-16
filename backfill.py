@@ -1,4 +1,4 @@
-# /home/pravin/Development/bse_scraper/backfill.py - REVISED
+# /home/pravin/Development/bse_scraper/backfill.py 
 
 from core.scraper import BSEScraper
 import os
@@ -20,7 +20,7 @@ def setup_logging():
     logger.setLevel(logging.INFO)
 
     # --- IMPORTANT: Clear any existing handlers ---
-    # This prevents duplicate logs if the script is run multiple times in the same process
+
     if logger.hasHandlers():
         logger.handlers.clear()
 
@@ -39,7 +39,7 @@ def setup_logging():
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    # --- PROFESSIONAL TOUCH: Control third-party library verbosity ---
+    # --- Control third-party library verbosity ---
     # Quieten down noisy libraries to keep our logs clean
     logging.getLogger("google.api_core").setLevel(logging.WARNING)
     logging.getLogger("google.auth.transport.requests").setLevel(logging.WARNING)
@@ -51,7 +51,7 @@ def setup_logging():
 async def main():
     """Main async function to run the backfill process."""
     log_path = setup_logging()
-    # Now we use a module-specific logger, which inherits from the root logger we just configured.
+
     logger = logging.getLogger(__name__)
 
     start_date = os.getenv("START_DATE")
@@ -69,7 +69,6 @@ async def main():
     logger.info(f"📝 Full logs for this run are in: {log_path}")
 
     scraper = BSEScraper(test_mode=False)
-    # The scraper will now automatically use the logger we just set up.
 
     # Run the scraper and collect all notification tasks
     notification_tasks = await scraper.run()

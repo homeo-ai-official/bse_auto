@@ -1,4 +1,4 @@
-# /home/pravin/Development/bse_scraper/main.py - REVISED
+# /home/pravin/Development/bse_scraper/main.py
 
 import time
 import asyncio
@@ -20,7 +20,7 @@ def setup_logging():
     logger.setLevel(logging.INFO)
 
     # --- IMPORTANT: Clear any existing handlers ---
-    # This prevents duplicate logs if the script is run in a weird way
+
     if logger.hasHandlers():
         logger.handlers.clear()
 
@@ -39,7 +39,7 @@ def setup_logging():
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
-    # --- PROFESSIONAL TOUCH: Control third-party library verbosity ---
+    # --- Control third-party library verbosity ---
     # Quieten down noisy google and other libraries
     logging.getLogger("google.api_core").setLevel(logging.WARNING)
     logging.getLogger("google.auth.transport.requests").setLevel(logging.WARNING)
@@ -96,7 +96,7 @@ def main():
     while True:
         try:
             # asyncio.run() creates and closes a new event loop for each poll.
-            # This is a clean and robust pattern for repeated async tasks.
+
             asyncio.run(run_single_poll())
 
             logger.info(
